@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pappermintpixel - Galeri Fotografi</title>
+    <!-- Import Google Fonts untuk Font Pixel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Pengaturan Dasar Body */
+        :root {
+            --primary-color: #00aaff;
+            --background-color: #121212;
+            --surface-color: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-muted-color: #888;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Header dengan Efek Parallax */
+        .header {
+            text-align: center;
+            padding: 100px 20px;
+            color: white;
+            position: relative;
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            /* GAMBAR HEADER BARU DARI UPLOAD PENGGUNA */
+            background-image: url('IMG_4314.jpg');
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4); /* Sedikit menggelapkan gambar agar teks terbaca */
+        }
+        .header-content {
+            position: relative;
+            z-index: 1;
+            min-height: 130px; /* Memberi ruang agar layout tidak bergeser */
+        }
+        .header h1 {
+            /* MENGGUNAKAN FONT PIXEL BARU */
+            font-family: 'Press Start 2P', cursive;
+            margin: 0;
+            font-size: clamp(1.5rem, 4vw, 2.5rem); /* Ukuran disesuaikan untuk font pixel */
+            font-weight: 400; /* Font pixel biasanya tidak punya variasi weight */
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: inline-block; /* Agar kursor pas di akhir teks */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Menambah bayangan agar lebih terbaca */
+        }
+        .header p {
+            margin: 15px 0 0;
+            color: #ccc;
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            font-style: italic;
+            opacity: 0; /* Awalnya disembunyikan */
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        /* Animasi Kursor Ketik */
+        .typing-cursor::after {
+            content: '_';
+            display: inline-block;
+            margin-left: 8px; /* Disesuaikan untuk font pixel */
+            font-weight: 400;
+            position: relative;
+            top: -2px;
+            animation: blink-caret 0.75s step-end infinite;
+        }
+        @keyframes blink-caret {
+            from, to { opacity: 1 }
+            50% { opacity: 0 }
+        }
+
+        /* Kontainer Utama */
+        .gallery-container {
+            max-width: 1600px;
+            margin: 50px auto;
+            padding: 0 30px;
+        }
+
+        /* Tombol Filter */
+        .filter-buttons {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .filter-btn {
+            background: none;
+            border: 1px solid var(--text-muted-color);
+            color: var(--text-muted-color);
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .filter-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Grid Foto */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        /* Item Foto dengan Animasi */
+        .photo-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            cursor: pointer;
+            background-color: var(--surface-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+        }
+        .photo-item.hidden {
+            display: none;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s;
+        }
+        .photo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 25px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .photo-overlay h3 { margin: 0; font-size: 1.4rem; }
+        .photo-overlay p { margin: 8px 0 0; font-size: 0.95rem; color: #ddd; }
+        .photo-item:hover img { transform: scale(1.1); opacity: 0.7; }
+        .photo-item:hover .photo-overlay { opacity: 1; transform: translateY(0); }
+        
+        /* Tombol Unduh Baru */
+        .download-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transform: scale(0);
+            transition: transform 0.3s ease;
+            z-index: 2; /* Memastikan tombol di atas overlay */
+        }
+        .photo-item:hover .download-btn {
+            transform: scale(1);
+        }
+        .download-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Lightbox Interaktif */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.4s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .lightbox-content-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            height: 90%;
+        }
+        .lightbox-content {
+            max-width: 85vw;
+            max-height: 85vh;
+            animation: zoomIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        @keyframes zoomIn { from { transform: scale(0.8); } to { transform: scale(1); } }
+        .close-button {
+            position: absolute;
+            top: 15px; right: 25px;
+            color: #fff; font-size: 45px;
+            font-weight: bold; cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .close-button:hover { transform: scale(1.1); }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.3s;
+        }
+        .lightbox-nav:hover { background: rgba(255, 255, 255, 0.2); }
+        .prev-btn { left: 15px; }
+        .next-btn { right: 15px; }
+
+        .lightbox-caption {
+            position: absolute;
+            bottom: 2%;
+            color: white;
+            text-align: center;
+            width: 70%;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .lightbox-caption h3 { margin: 0; font-size: 1.5rem; }
+        .lightbox-caption p { margin-top: 5px; font-size: 1rem; color: #ccc; }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 50px 20px;
+            margin-top: 60px;
+            background-color: #0a0a0a;
+            color: var(--text-muted-color);
+        }
+        .footer a { color: var(--primary-color); text-decoration: none; transition: color 0.3s; }
+        .footer a:hover { color: #fff; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 id="main-title"></h1>
+            <p id="subtitle"></p>
+        </div>
+    </header>
+
+    <main class="gallery-container">
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">Semua</button>
+            <button class="filter-btn" data-filter="alam">Alam</button>
+            <button class="filter-btn" data-filter="kota">Kota</button>
+            <button class="filter-btn" data-filter="hitamputih">Hitam Putih</button>
+        </div>
+
+        <div class="photo-grid">
+            <div class="photo-item" data-category="alam" style="animation-delay: 0s;">
+                <img src="IMG_0626 (1).jpg" data-fullurl="IMG_0626 (1).jpg" alt="Air terjun Rayap">
+                 <a href="IMG_0626 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                </a>
+                <div class="photo-overlay">
+                    <h3>Air terjun Rayap</h3><p>Keindahan alam yang tersembunyi.</p>
+                </div>
+            </div>
+            <div class="photo-item" data-category="alam" style="animation-delay: 0.1s;">
+                <img src="IMG_0628.jpg" data-fullurl="IMG_0628.jpg" alt="Semeru Mountain">
+                <a href="IMG_0628.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                </a>
+                <div class="photo-overlay">
+                    <h3>Semeru Mountain</h3><p>Puncak tertinggi di Jawa.</p>
+                </div>
+            </div>
+            <div class="photo-item" data-category="alam" style="animation-delay: 0.2s;">
+                <img src="IMG_4317.jpg" data-fullurl="IMG_4317.jpg" alt="Ranu Pani">
+                 <a href="IMG_4317.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                </a>
+                <div class="photo-overlay">
+                    <h3>Ranu Pani</h3><p>Danau di ketinggian.</p>
+                </div>
+            </div>
+            <div class="photo-item" data-category="alam" style="animation-delay: 0.3s;">
+                <img src="SAVE_20241112_231034.jpg" data-fullurl="SAVE_20241112_231034.jpg" alt="Danau Baratan Bedugul">
+                 <a href="SAVE_20241112_231034.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                </a>
+                <div class="photo-overlay">
+                    <h3>Danau Baratan Bedugul</h3><p>Pura di atas danau.</p>
+                </div>
+            </div>
+            <div class="photo-item" data-category="kota" style="animation-delay: 0.4s;">
+                <img src="IMG_9673.jpg" data-fullurl="IMG_9673.jpg" alt="Garuda Wisnu Kencana">
+                 <a href="IMG_9673.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                </a>
+                <div class="photo-overlay">
+                    <h3>Garuda Wisnu Kencana</h3><p>Patung ikonik di Bali.</p>
+                </div>
+            </div>
+            <div class="photo-item" data-category="kota" style="animation-delay: 0.5s;">
+                <img src="IMG_0343 (1).jpg" data-fullurl="IMG_0343 (1).jpg" alt="MRT Jakarta">
+                 <a href="IMG_0343 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                </a>
+                <div class="photo-overlay">
+                    <h3>MRT Jakarta</h3><p>Moda transportasi modern di ibu kota.</p>
+                </div>
+            </div>
+            <div class="photo-item" data-category="kota" style="animation-delay: 0.6s;">
+                <img src="IMG_0666 (1).jpg" data-fullurl="IMG_0666 (1).jpg" alt="KRL Commuterline">
+                 <a href="IMG_0666 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                </a>
+                <div class="photo-overlay">
+                    <h3>KRL Commuterline</h3><p>Urat nadi transportasi Jabodetabek.</p>
+                </div>
+            </div>
+            <!-- FOTO BARU DITAMBAHKAN DI SINI -->
+            <div class="photo-item" data-category="kota" style="animation-delay: 0.7s;">
+                <img src="IMG_0478.jpg" data-fullurl="IMG_0478.jpg" alt="Transjakarta">
+                 <a href="IMG_0478.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                </a>
+                <div class="photo-overlay">
+                    <h3>Transjakarta</h3><p>Denyut nadi kota di malam hari.</p>
+                </div>
+            </div>
+            <div class="photo-item" data-category="kota" style="animation-delay: 0.8s;">
+                <img src="PXL_20231129_133042705.jpg" data-fullurl="PXL_20231129_133042705.jpg" alt="Desa Penglipuran Bali">
+                 <a href="PXL_20231129_133042705.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                </a>
+                <div class="photo-overlay">
+                    <h3>Desa Penglipuran Bali</h3><p>Desa adat tradisional di Bali.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 <a href="#">Pappermintpixel</a>. Semua karya adalah milik pribadi.</p>
+        <p>Hubungi saya di Instagram: <a href="https://www.instagram.com/dewaasam_/" target="_blank" rel="noopener noreferrer">@dewaasam_</a></p>
+    </footer>
+    
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-content-wrapper">
+            <button class="lightbox-nav prev-btn">&#10094;</button>
+            <img class="lightbox-content" id="lightbox-img" alt="Tampilan besar">
+            <button class="lightbox-nav next-btn">&#10095;</button>
+        </div>
+        <span class="close-button">&times;</span>
+        <div class="lightbox-caption" id="lightbox-caption">
+            <h3></h3><p></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animasi Ketik untuk Judul dan Subjudul
+            const titleEl = document.getElementById('main-title');
+            const subtitleEl = document.getElementById('subtitle');
+            const titleText = 'Pappermintpixel';
+            const subtitleText = 'Sudut Pandang Sebuah Piksel';
+
+            function typeWriter(element, text, speed, onComplete) {
+                let i = 0;
+                element.innerHTML = '';
+                element.classList.add('typing-cursor');
+                
+                function type() {
+                    if (i < text.length) {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                        setTimeout(type, speed);
+                    } else {
+                        element.classList.remove('typing-cursor');
+                        if (onComplete) {
+                            onComplete();
+                        }
+                    }
+                }
+                type();
+            }
+
+            // Mulai animasi ketik untuk judul, lalu lanjutkan ke subjudul
+            typeWriter(titleEl, titleText, 150, () => { // Perlambat kecepatan ketik untuk font pixel
+                subtitleEl.style.opacity = 1; // Tampilkan subjudul
+                typeWriter(subtitleEl, subtitleText, 75);
+            });
+
+            // Kode Galeri yang sudah ada
+            const photoItems = document.querySelectorAll('.photo-item');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const lightboxCaption = document.getElementById('lightbox-caption');
+            const captionTitle = lightboxCaption.querySelector('h3');
+            const captionDesc = lightboxCaption.querySelector('p');
+            const closeBtn = document.querySelector('.close-button');
+            const prevBtn = document.querySelector('.prev-btn');
+            const nextBtn = document.querySelector('.next-btn');
+
+            let currentIndex;
+            let currentVisibleItems = [];
+
+            // 1. Fungsi Filter
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const filter = button.dataset.filter;
+                    currentVisibleItems = [];
+                    photoItems.forEach(item => {
+                        if (filter === 'all' || item.dataset.category === filter) {
+                            item.classList.remove('hidden');
+                            currentVisibleItems.push(item);
+                        } else {
+                            item.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            // Inisialisasi item yang terlihat
+            const initializeVisibleItems = () => {
+                currentVisibleItems = Array.from(photoItems).filter(item => !item.classList.contains('hidden'));
+            };
+
+            // 2. Fungsi Lightbox
+            photoItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    // Hanya buka lightbox jika target klik bukan tombol unduh atau isinya
+                    if (e.target.closest('.download-btn')) {
+                        return;
+                    }
+                    initializeVisibleItems();
+                    const itemImg = item.querySelector('img');
+                    const title = item.querySelector('h3').textContent;
+                    const desc = item.querySelector('p').textContent;
+                    lightboxImg.src = itemImg.dataset.fullurl;
+                    captionTitle.textContent = title;
+                    captionDesc.textContent = desc;
+                    currentIndex = currentVisibleItems.indexOf(item);
+                    lightbox.style.display = 'flex';
+                });
+            });
+
+            const closeLightbox = () => {
+                lightbox.style.display = 'none';
+            };
+
+            const showPhoto = (index) => {
+                if (index >= currentVisibleItems.length) index = 0;
+                if (index < 0) index = currentVisibleItems.length - 1;
+                
+                const item = currentVisibleItems[index];
+                const itemImg = item.querySelector('img');
+                const title = item.querySelector('h3').textContent;
+                const desc = item.querySelector('p').textContent;
+                
+                lightboxImg.src = itemImg.dataset.fullurl;
+                captionTitle.textContent = title;
+                captionDesc.textContent = desc;
+                currentIndex = index;
+            };
+
+            // Event Listeners untuk Lightbox
+            closeBtn.addEventListener('click', closeLightbox);
+            nextBtn.addEventListener('click', () => showPhoto(currentIndex + 1));
+            prevBtn.addEventListener('click', () => showPhoto(currentIndex - 1));
+            lightbox.addEventListener('click', e => {
+                if (e.target === lightbox) closeLightbox();
+            });
+            document.addEventListener('keydown', e => {
+                if (lightbox.style.display === 'flex') {
+                    if (e.key === 'Escape') closeLightbox();
+                    if (e.key === 'ArrowRight') showPhoto(currentIndex + 1);
+                    if (e.key === 'ArrowLeft') showPhoto(currentIndex - 1);
+                }
+            });
+            
+            // Inisialisasi saat pertama kali load
+            initializeVisibleItems();
+        });
+    </script>
+</body>
+</html>
