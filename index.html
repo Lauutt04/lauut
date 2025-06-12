@@ -4,82 +4,289 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pappermintpixel - Galeri Fotografi</title>
-    <!-- Import Google Fonts untuk Font Pixel -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;900&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* Pengaturan Dasar Body */
+        /* =================================
+           PENGATURAN DASAR & VARIABEL WARNA
+           ================================= */
         :root {
-            --primary-color: #00aaff;
+            --primary-color: #FFFFFF;
             --background-color: #121212;
             --surface-color: #1e1e1e;
             --text-color: #e0e0e0;
             --text-muted-color: #888;
+            --border-color: #FFFFFF;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             background-color: var(--background-color);
             color: var(--text-color);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Sembunyikan kursor default saat efek kustom aktif */
+        body.preloader-active,
+        body.cursor-active {
+            cursor: none;
         }
 
-        /* Header dengan Efek Parallax */
-        .header {
+        /* Styling untuk Kursor Kustom (Splash Cursor) */
+        .cursor-dot,
+        .cursor-outline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 10001;
+            border-radius: 50%;
+            opacity: 0;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.3s, transform 0.3s, background-color 0.3s;
+        }
+
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+        }
+
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        body.cursor-active .cursor-dot,
+        body.cursor-active .cursor-outline {
+            opacity: 1;
+        }
+
+        .cursor-outline.hover {
+            transform: translate(-50%, -50%) scale(1.5);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .cursor-dot.hover {
+            opacity: 0;
+        }
+
+
+        /* EFEK LATAR BELAKANG "BEAMS" */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse 80% 80% at 10% 10%, hsla(0, 0%, 100%, 0.08), transparent),
+                radial-gradient(ellipse 60% 70% at 85% 90%, hsla(0, 0%, 100%, 0.07), transparent),
+                radial-gradient(ellipse 50% 60% at 50% 50%, hsla(0, 0%, 100%, 0.05), transparent);
+            animation: rotateBeams 45s linear infinite;
+        }
+
+        @keyframes rotateBeams {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        body.no-scroll {
+             overflow: hidden;
+        }
+
+        /* =================================
+           PRELOADER / HALAMAN SAMBUTAN
+           ================================= */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 1s cubic-bezier(0.77, 0, 0.175, 1), opacity 1s;
+            /* BARU: Terapkan efek spotlight pada background preloader */
+            background: radial-gradient(
+                circle at var(--x, 50%) var(--y, 50%),
+                transparent 80px,
+                rgba(0, 0, 0, 0.95) 160px
+            );
+        }
+        
+        #preloader.rolling-up {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+        .preloader-content {
             text-align: center;
-            padding: 100px 20px;
             color: white;
             position: relative;
+            z-index: 10000;
+        }
+        
+        .focus-container {
+            position: relative;
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .focus-word {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 600;
+            color: var(--text-muted-color);
+            filter: blur(3px);
+            transition: filter 0.5s ease, color 0.5s ease;
+        }
+
+        .focus-word.active {
+            color: white;
+            filter: blur(0);
+        }
+
+        .focus-frame {
+            position: absolute;
+            pointer-events: none;
+            box-sizing: content-box;
+            border: none;
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .corner {
+            position: absolute;
+            width: 1rem;
+            height: 1rem;
+            border: 3px solid var(--border-color);
+            filter: drop-shadow(0px 0px 4px var(--border-color));
+            border-radius: 3px;
+        }
+
+        .top-left { top: -10px; left: -10px; border-right: none; border-bottom: none; }
+        .top-right { top: -10px; right: -10px; border-left: none; border-bottom: none; }
+        .bottom-left { bottom: -10px; left: -10px; border-right: none; border-top: none; }
+        .bottom-right { bottom: -10px; right: -10px; border-left: none; border-top: none; }
+
+        .preloader-content p {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            margin: 10px 0 30px 0;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        #enter-btn {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 1rem;
+            padding: 12px 35px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 50px;
+            cursor: none; /* Kursor ditangani oleh body */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        #enter-btn:hover {
+            background-color: white;
+            color: black;
+        }
+        
+        /* =================================
+           KONTEN UTAMA & HEADER
+           ================================= */
+        #main-content {
+            opacity: 1; 
+            position: relative;
+            z-index: 1;
+            background-color: transparent;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 330px;
+            position: relative;
+            overflow: hidden; 
             background-attachment: fixed;
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
-            /* GAMBAR HEADER BARU DARI UPLOAD PENGGUNA */
             background-image: url('IMG_4314.jpg');
         }
-        .header::before {
+        .header-overlay {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.4); /* Sedikit menggelapkan gambar agar teks terbaca */
+            background: rgba(0,0,0,0.4);
         }
+        
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0; 
+        }
+        
         .header-content {
             position: relative;
-            z-index: 1;
-            min-height: 130px; /* Memberi ruang agar layout tidak bergeser */
+            z-index: 1; 
+            min-height: 130px;
         }
         .header h1 {
-            /* MENGGUNAKAN FONT PIXEL BARU */
             font-family: 'Press Start 2P', cursive;
             margin: 0;
-            font-size: clamp(1.5rem, 4vw, 2.5rem); /* Ukuran disesuaikan untuk font pixel */
-            font-weight: 400; /* Font pixel biasanya tidak punya variasi weight */
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 400;
             letter-spacing: 2px;
             text-transform: uppercase;
-            display: inline-block; /* Agar kursor pas di akhir teks */
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Menambah bayangan agar lebih terbaca */
+            display: inline-block;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
         .header p {
             margin: 15px 0 0;
             color: #ccc;
             font-size: clamp(1rem, 2vw, 1.2rem);
             font-style: italic;
-            opacity: 0; /* Awalnya disembunyikan */
+            opacity: 0;
             transition: opacity 0.5s ease-in-out;
         }
         
-        /* Animasi Kursor Ketik */
         .typing-cursor::after {
             content: '_';
             display: inline-block;
-            margin-left: 8px; /* Disesuaikan untuk font pixel */
+            margin-left: 8px;
             font-weight: 400;
             position: relative;
             top: -2px;
@@ -89,86 +296,82 @@
             from, to { opacity: 1 }
             50% { opacity: 0 }
         }
-
-        /* Kontainer Utama */
+        
+        /* =================================
+           GALERI, FILTER, & FOTO
+           ================================= */
         .gallery-container {
-            max-width: 1600px;
+            max-width: 1200px;
             margin: 50px auto;
             padding: 0 30px;
         }
 
-        /* Tombol Filter */
         .filter-buttons {
             text-align: center;
             margin-bottom: 40px;
         }
-        .filter-btn {
-            background: none;
-            border: 1px solid var(--text-muted-color);
+        
+        .filter-btn, .page-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-muted-color);
             padding: 10px 20px;
             margin: 5px;
             border-radius: 20px;
-            cursor: pointer;
             font-size: 0.9rem;
+            cursor: none; /* Kursor ditangani oleh body */
             transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
         }
-        .filter-btn:hover {
+        
+        .filter-btn:hover, .filter-btn.active, .page-btn:hover, .page-btn.active {
             background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-        .filter-btn.active {
-            background-color: var(--primary-color);
-            color: white;
+            color: var(--background-color);
             border-color: var(--primary-color);
         }
 
-        /* Grid Foto */
         .photo-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 25px;
         }
-
-        /* Item Foto dengan Animasi */
         .photo-item {
             position: relative;
             overflow: hidden;
             border-radius: 12px;
-            cursor: pointer;
             background-color: var(--surface-color);
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            animation: fadeInUp 0.6s ease forwards;
-            opacity: 0;
+            visibility: hidden;
+            height: 350px;
+            cursor: none; /* Kursor ditangani oleh body */
         }
         .photo-item.hidden {
             display: none;
         }
-
-        @keyframes fadeInUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+        
+        .photo-item.visible {
+            visibility: visible;
         }
+
         .photo-item img {
             width: 100%;
-            height: 100%;
+            height: 120%;
+            position: absolute;
+            top: -10%;
+            left: 0;
             display: block;
             object-fit: cover;
             transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s;
         }
+
+        #jimbaran-preview {
+            object-position: center 90%;
+        }
+        
         .photo-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
             color: white;
             display: flex;
@@ -179,18 +382,16 @@
             transform: translateY(20px);
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
+        
         .photo-overlay h3 { margin: 0; font-size: 1.4rem; }
         .photo-overlay p { margin: 8px 0 0; font-size: 0.95rem; color: #ddd; }
         .photo-item:hover img { transform: scale(1.1); opacity: 0.7; }
         .photo-item:hover .photo-overlay { opacity: 1; transform: translateY(0); }
         
-        /* Tombol Unduh Baru */
         .download-btn {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 40px;
-            height: 40px;
+            top: 15px; right: 15px;
+            width: 40px; height: 40px;
             background-color: rgba(0,0,0,0.5);
             color: white;
             border-radius: 50%;
@@ -200,206 +401,172 @@
             text-decoration: none;
             transform: scale(0);
             transition: transform 0.3s ease;
-            z-index: 2; /* Memastikan tombol di atas overlay */
+            z-index: 2;
         }
-        .photo-item:hover .download-btn {
-            transform: scale(1);
+        .photo-item:hover .download-btn { transform: scale(1); }
+        .download-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        
+        /* =================================
+           PAGINASI & LIGHTBOX
+           ================================= */
+        .pagination {
+            text-align: center;
+            margin-top: 40px;
         }
-        .download-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
+        
+        .page-btn {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            min-width: 40px;
+            height: 40px;
+            border-radius: 8px;
         }
 
-        /* Lightbox Interaktif */
-        .lightbox {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.95);
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.4s;
-        }
+        .lightbox { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); justify-content: center; align-items: center; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .lightbox-content-wrapper {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 90%;
-            height: 90%;
-        }
-        .lightbox-content {
-            max-width: 85vw;
-            max-height: 85vh;
-            animation: zoomIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
+        .lightbox-content-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 90%; height: 90%; }
+        .lightbox-content { max-width: 85vw; max-height: 85vh; animation: zoomIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); border-radius: 8px; }
         @keyframes zoomIn { from { transform: scale(0.8); } to { transform: scale(1); } }
-        .close-button {
-            position: absolute;
-            top: 15px; right: 25px;
-            color: #fff; font-size: 45px;
-            font-weight: bold; cursor: pointer;
-            transition: transform 0.3s;
-        }
+        .close-button { position: absolute; top: 15px; right: 25px; color: #fff; font-size: 45px; font-weight: bold; cursor: pointer; transition: transform 0.3s; }
         .close-button:hover { transform: scale(1.1); }
-
-        .lightbox-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background 0.3s;
-        }
+        .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 50px; height: 50px; background: rgba(255, 255, 255, 0.1); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 24px; display: flex; justify-content: center; align-items: center; transition: background 0.3s; }
         .lightbox-nav:hover { background: rgba(255, 255, 255, 0.2); }
         .prev-btn { left: 15px; }
         .next-btn { right: 15px; }
-
-        .lightbox-caption {
-            position: absolute;
-            bottom: 2%;
-            color: white;
-            text-align: center;
-            width: 70%;
-            background: rgba(0,0,0,0.3);
-            padding: 10px;
-            border-radius: 8px;
+        
+        .lightbox-caption { 
+            position: absolute; 
+            bottom: 2%; 
+            color: white; 
+            text-align: center; 
+            width: 70%; 
+            background: rgba(30, 30, 30, 0.5); 
+            padding: 15px; 
+            border-radius: 12px; 
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .lightbox-caption h3 { margin: 0; font-size: 1.5rem; }
-        .lightbox-caption p { margin-top: 5px; font-size: 1rem; color: #ccc; }
+        .lightbox-caption p { margin: 5px 0 0; font-size: 1rem; color: #ccc; }
         
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 50px 20px;
-            margin-top: 60px;
-            background-color: #0a0a0a;
+        /* =================================
+           FOOTER & TOMBOL KEMBALI KE ATAS
+           ================================= */
+        .footer { 
+            text-align: center; 
+            padding: 50px 20px; 
+            margin-top: 60px; 
+            background-color: #0a0a0a; 
             color: var(--text-muted-color);
+            position: relative;
+            z-index: 1;
         }
-        .footer a { color: var(--primary-color); text-decoration: none; transition: color 0.3s; }
-        .footer a:hover { color: #fff; }
+        .footer a { color: var(--primary-color); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        
+        #back-to-top-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+            z-index: 999;
+            cursor: none; /* Kursor ditangani oleh body */
+        }
+        #back-to-top-btn.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        #back-to-top-btn:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <h1 id="main-title"></h1>
-            <p id="subtitle"></p>
-        </div>
-    </header>
+    <!-- Elemen untuk kursor kustom -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
 
-    <main class="gallery-container">
-        <div class="filter-buttons">
-            <button class="filter-btn active" data-filter="all">Semua</button>
-            <button class="filter-btn" data-filter="alam">Alam</button>
-            <button class="filter-btn" data-filter="kota">Kota</button>
-            <button class="filter-btn" data-filter="hitamputih">Hitam Putih</button>
+    <!-- Preloader / Halaman Sambutan -->
+    <div id="preloader">
+        <div class="preloader-content">
+            <div class="focus-container">
+                <span class="focus-word">Selamat</span>
+                <span class="focus-word">datang</span>
+                <span class="focus-word">di</span>
+                <span class="focus-word">gallery</span>
+                <div class="focus-frame">
+                    <div class="corner top-left"></div>
+                    <div class="corner top-right"></div>
+                    <div class="corner bottom-left"></div>
+                    <div class="corner bottom-right"></div>
+                </div>
+            </div>
+            <p>karya by lautt</p>
+            <button id="enter-btn">Jelajah Galeri</button>
         </div>
-
-        <div class="photo-grid">
-            <div class="photo-item" data-category="alam" style="animation-delay: 0s;">
-                <img src="IMG_0626 (1).jpg" data-fullurl="IMG_0626 (1).jpg" alt="Air terjun Rayap">
-                 <a href="IMG_0626 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                </a>
-                <div class="photo-overlay">
-                    <h3>Air terjun Rayap</h3><p>Keindahan alam yang tersembunyi.</p>
-                </div>
-            </div>
-            <div class="photo-item" data-category="alam" style="animation-delay: 0.1s;">
-                <img src="IMG_0628.jpg" data-fullurl="IMG_0628.jpg" alt="Semeru Mountain">
-                <a href="IMG_0628.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                </a>
-                <div class="photo-overlay">
-                    <h3>Semeru Mountain</h3><p>Puncak tertinggi di Jawa.</p>
-                </div>
-            </div>
-            <div class="photo-item" data-category="alam" style="animation-delay: 0.2s;">
-                <img src="IMG_4317.jpg" data-fullurl="IMG_4317.jpg" alt="Ranu Pani">
-                 <a href="IMG_4317.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                </a>
-                <div class="photo-overlay">
-                    <h3>Ranu Pani</h3><p>Danau di ketinggian.</p>
-                </div>
-            </div>
-            <div class="photo-item" data-category="alam" style="animation-delay: 0.3s;">
-                <img src="SAVE_20241112_231034.jpg" data-fullurl="SAVE_20241112_231034.jpg" alt="Danau Baratan Bedugul">
-                 <a href="SAVE_20241112_231034.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                </a>
-                <div class="photo-overlay">
-                    <h3>Danau Baratan Bedugul</h3><p>Pura di atas danau.</p>
-                </div>
-            </div>
-            <div class="photo-item" data-category="kota" style="animation-delay: 0.4s;">
-                <img src="IMG_9673.jpg" data-fullurl="IMG_9673.jpg" alt="Garuda Wisnu Kencana">
-                 <a href="IMG_9673.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                </a>
-                <div class="photo-overlay">
-                    <h3>Garuda Wisnu Kencana</h3><p>Patung ikonik di Bali.</p>
-                </div>
-            </div>
-            <div class="photo-item" data-category="kota" style="animation-delay: 0.5s;">
-                <img src="IMG_0343 (1).jpg" data-fullurl="IMG_0343 (1).jpg" alt="MRT Jakarta">
-                 <a href="IMG_0343 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                </a>
-                <div class="photo-overlay">
-                    <h3>MRT Jakarta</h3><p>Moda transportasi modern di ibu kota.</p>
-                </div>
-            </div>
-            <div class="photo-item" data-category="kota" style="animation-delay: 0.6s;">
-                <img src="IMG_0666 (1).jpg" data-fullurl="IMG_0666 (1).jpg" alt="KRL Commuterline">
-                 <a href="IMG_0666 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                </a>
-                <div class="photo-overlay">
-                    <h3>KRL Commuterline</h3><p>Urat nadi transportasi Jabodetabek.</p>
-                </div>
-            </div>
-            <!-- FOTO BARU DITAMBAHKAN DI SINI -->
-            <div class="photo-item" data-category="kota" style="animation-delay: 0.7s;">
-                <img src="IMG_0478.jpg" data-fullurl="IMG_0478.jpg" alt="Transjakarta">
-                 <a href="IMG_0478.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                </a>
-                <div class="photo-overlay">
-                    <h3>Transjakarta</h3><p>Denyut nadi kota di malam hari.</p>
-                </div>
-            </div>
-            <div class="photo-item" data-category="kota" style="animation-delay: 0.8s;">
-                <img src="PXL_20231129_133042705.jpg" data-fullurl="PXL_20231129_133042705.jpg" alt="Desa Penglipuran Bali">
-                 <a href="PXL_20231129_133042705.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                </a>
-                <div class="photo-overlay">
-                    <h3>Desa Penglipuran Bali</h3><p>Desa adat tradisional di Bali.</p>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer class="footer">
-        <p>&copy; 2025 <a href="#">Pappermintpixel</a>. Semua karya adalah milik pribadi.</p>
-        <p>Hubungi saya di Instagram: <a href="https://www.instagram.com/dewaasam_/" target="_blank" rel="noopener noreferrer">@dewaasam_</a></p>
-    </footer>
+    </div>
     
+    <!-- Konten Utama Website -->
+    <div id="main-content">
+        <header class="header">
+            <div class="header-overlay"></div>
+            <div id="particles-js"></div>
+            <div class="header-content">
+                <h1 id="main-title"></h1>
+                <p id="subtitle"></p>
+            </div>
+        </header>
+
+        <main class="gallery-container">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">Semua</button>
+                <button class="filter-btn" data-filter="alam">Alam</button>
+                <button class="filter-btn" data-filter="kota">Kota</button>
+                <button class="filter-btn" data-filter="hitamputih">Hitam Putih</button>
+            </div>
+
+            <div class="photo-grid">
+                <!-- Foto-foto Anda -->
+                <div class="photo-item" data-category="alam"><img src="IMG_0626 (1).jpg" data-fullurl="IMG_0626 (1).jpg" alt="Air terjun Rayap"><a href="IMG_0626 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Air terjun Rayap</h3><p>Keindahan alam yang tersembunyi.</p></div></div>
+                <div class="photo-item" data-category="alam"><img src="IMG_0628.jpg" data-fullurl="IMG_0628.jpg" alt="Semeru Mountain"><a href="IMG_0628.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Semeru Mountain</h3><p>Puncak tertinggi di Jawa.</p></div></div>
+                <div class="photo-item" data-category="alam"><img src="IMG_4317.jpg" data-fullurl="IMG_4317.jpg" alt="Ranu Pani"><a href="IMG_4317.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Ranu Pani</h3><p>Danau di ketinggian.</p></div></div>
+                <div class="photo-item" data-category="alam"><img src="SAVE_20241112_231034.jpg" data-fullurl="SAVE_20241112_231034.jpg" alt="Danau Baratan Bedugul"><a href="SAVE_20241112_231034.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Danau Baratan Bedugul</h3><p>Pura di atas danau.</p></div></div>
+                <div class="photo-item" data-category="kota"><img src="IMG_9673.jpg" data-fullurl="IMG_9673.jpg" alt="Garuda Wisnu Kencana"><a href="IMG_9673.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Garuda Wisnu Kencana</h3><p>Patung ikonik di Bali.</p></div></div>
+                <div class="photo-item" data-category="kota"><img src="IMG_0343 (1).jpg" data-fullurl="IMG_0343 (1).jpg" alt="MRT Jakarta"><a href="IMG_0343 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>MRT Jakarta</h3><p>Moda transportasi modern di ibu kota.</p></div></div>
+                <div class="photo-item" data-category="kota"><img src="IMG_0666 (1).jpg" data-fullurl="IMG_0666 (1).jpg" alt="KRL Commuterline"><a href="IMG_0666 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>KRL Commuterline</h3><p>Urat nadi transportasi Jabodetabek.</p></div></div>
+                <div class="photo-item" data-category="kota"><img src="IMG_0478.jpg" data-fullurl="IMG_0478.jpg" alt="Transjakarta"><a href="IMG_0478.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Transjakarta</h3><p>Denyut nadi kota di malam hari.</p></div></div>
+                <div class="photo-item" data-category="kota"><img src="PXL_20231129_133042705.jpg" data-fullurl="PXL_20231129_133042705.jpg" alt="Desa Penglipuran Bali"><a href="PXL_20231129_133042705.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Desa Penglipuran Bali</h3><p>Desa adat tradisional di Bali.</p></div></div>
+                
+                <!-- 5 Foto tambahan -->
+                <div class="photo-item" data-category="kota"><img src="PXL_20250113_154012149 (2)~3.jpg" data-fullurl="PXL_20250113_154012149 (2)~3.jpg" alt="Bundaran HI"><a href="PXL_20250113_154012149 (2)~3.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Bundaran HI</h3><p>Ikon modern Jakarta yang ramai.</p></div></div>
+                <div class="photo-item" data-category="kota"><img src="20240218-20240218132416_IMG_0341.jpg" data-fullurl="20240218-20240218132416_IMG_0341.jpg" alt="Tugu Jogja"><a href="20240218-20240218132416_IMG_0341.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Tugu Jogja</h3><p>Landmark bersejarah di jantung Yogyakarta.</p></div></div>
+                <div class="photo-item" data-category="hitamputih"><img src="20240226-IMG_0445.jpg" data-fullurl="20240226-IMG_0445.jpg" alt="Pesawat Militer"><a href="20240226-IMG_0445.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Pesawat Militer</h3><p>Formasi di angkasa kelabu.</p></div></div>
+                <div class="photo-item" data-category="alam"><img id="jimbaran-preview" src="IMG_9214-1.jpg" data-fullurl="IMG_9214-1.jpg" alt="Tepi Pantai Jimbaran"><a href="IMG_9214-1.jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Tepi Pantai Jimbaran</h3><p>Senja keemasan di atas laut yang tenang.</p></div></div>
+                <div class="photo-item" data-category="kota"><img src="IMG_9725 (1).jpg" data-fullurl="IMG_9725 (1).jpg" alt="Tari Kecak GWK"><a href="IMG_9725 (1).jpg" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Unduh Gambar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></a><div class="photo-overlay"><h3>Tari Kecak GWK</h3><p>Pertunjukan epik di panggung terbuka.</p></div></div>
+            </div>
+            <div id="pagination-container" class="pagination"></div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 <a href="#">Pappermintpixel</a>. Semua karya adalah milik pribadi.</p>
+            <p>Hubungi saya di Instagram: <a href="https://www.instagram.com/dewaasam_/" target="_blank" rel="noopener noreferrer">@dewaasam_</a></p>
+        </footer>
+    </div>
+    
+    <!-- Lightbox untuk Tampilan Foto -->
     <div class="lightbox" id="lightbox">
         <div class="lightbox-content-wrapper">
             <button class="lightbox-nav prev-btn">&#10094;</button>
@@ -411,44 +578,244 @@
             <h3></h3><p></p>
         </div>
     </div>
+    
+    <!-- Tombol Kembali ke Atas -->
+    <button id="back-to-top-btn" title="Kembali ke atas">&#8679;</button>
 
+    <!-- Pustaka JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Animasi Ketik untuk Judul dan Subjudul
-            const titleEl = document.getElementById('main-title');
-            const subtitleEl = document.getElementById('subtitle');
-            const titleText = 'Pappermintpixel';
-            const subtitleText = 'Sudut Pandang Sebuah Piksel';
+            // Inisialisasi particles.js untuk header
+            particlesJS('particles-js', { "particles":{ "number":{ "value":80, "density":{ "enable":true, "value_area":800 } }, "color":{ "value":"#ffffff" }, "shape":{ "type":"circle", }, "opacity":{ "value":0.5, "random":false, "anim":{ "enable":false } }, "size":{ "value":3, "random":true, "anim":{ "enable":false } }, "line_linked":{ "enable":true, "distance":150, "color":"#ffffff", "opacity":0.4, "width":1 }, "move":{ "enable":true, "speed":2, "direction":"none", "random":false, "straight":false, "out_mode":"out", "bounce":false } }, "interactivity":{ "detect_on":"canvas", "events":{ "onhover":{ "enable":true, "mode":"repulse" }, "onclick":{ "enable":true, "mode":"push" }, "resize":true }, "modes":{ "repulse":{ "distance":100, "duration":0.4 }, "push":{ "particles_nb":4 } } }, "retina_detect":true });
 
-            function typeWriter(element, text, speed, onComplete) {
-                let i = 0;
-                element.innerHTML = '';
-                element.classList.add('typing-cursor');
-                
-                function type() {
-                    if (i < text.length) {
-                        element.innerHTML += text.charAt(i);
-                        i++;
-                        setTimeout(type, speed);
-                    } else {
-                        element.classList.remove('typing-cursor');
-                        if (onComplete) {
-                            onComplete();
-                        }
-                    }
+            gsap.registerPlugin(ScrollTrigger);
+
+            const preloader = document.getElementById('preloader');
+            const enterBtn = document.getElementById('enter-btn');
+            
+            const cursorDot = document.querySelector('.cursor-dot');
+            const cursorOutline = document.querySelector('.cursor-outline');
+            
+            let soundsReady = false;
+            const whoosh = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0 } }).toDestination();
+            const filter = new Tone.AutoFilter("4n").toDestination().start();
+            whoosh.connect(filter);
+            whoosh.volume.value = -20;
+            const chime = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0.1, release: 1 }, volume: -15 }).toDestination();
+            
+            function enterWebsite() {
+                if (!soundsReady) {
+                    Tone.start();
+                    soundsReady = true;
                 }
-                type();
+                const now = Tone.now();
+                whoosh.triggerAttackRelease("4n", now);
+                chime.triggerAttackRelease("C6", "8n", now + 0.1);
+
+                preloader.classList.add('rolling-up');
+                document.body.classList.remove('no-scroll');
+                
+                // BARU: Ganti dari mode spotlight ke mode splash cursor
+                document.body.classList.remove('preloader-active');
+                document.body.classList.add('cursor-active');
+                
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                    startHeaderAnimation(); 
+                }, 1000); 
+            }
+            
+            const focusContainer = document.querySelector('.focus-container');
+            if(focusContainer) {
+                const focusWords = focusContainer.querySelectorAll('.focus-word');
+                const focusFrame = focusContainer.querySelector('.focus-frame');
+                let focusIndex = 0;
+
+                function updateFocus() {
+                    if (focusWords.length === 0 || !focusFrame) return;
+                    
+                    focusWords.forEach(word => word.classList.remove('active'));
+                    const currentWord = focusWords[focusIndex];
+                    
+                    if (currentWord) {
+                        currentWord.classList.add('active');
+                        const wordRect = currentWord.getBoundingClientRect();
+                        const containerRect = focusContainer.getBoundingClientRect();
+                        focusFrame.style.width = wordRect.width + 'px';
+                        focusFrame.style.height = wordRect.height + 'px';
+                        focusFrame.style.left = (wordRect.left - containerRect.left) + 'px';
+                        focusFrame.style.top = (wordRect.top - containerRect.top) + 'px';
+                    }
+                    
+                    focusIndex = (focusIndex + 1) % focusWords.length;
+                }
+                updateFocus();
+                setInterval(updateFocus, 1200);
             }
 
-            // Mulai animasi ketik untuk judul, lalu lanjutkan ke subjudul
-            typeWriter(titleEl, titleText, 150, () => { // Perlambat kecepatan ketik untuk font pixel
-                subtitleEl.style.opacity = 1; // Tampilkan subjudul
-                typeWriter(subtitleEl, subtitleText, 75);
+            if (enterBtn) {
+                // Aktifkan mode preloader/spotlight
+                document.body.classList.add('preloader-active');
+
+                // Listener untuk efek spotlight
+                preloader.addEventListener('mousemove', e => {
+                    preloader.style.setProperty('--x', e.clientX + 'px');
+                    preloader.style.setProperty('--y', e.clientY + 'px');
+                });
+
+                enterBtn.addEventListener('click', enterWebsite);
+                document.body.classList.add('no-scroll');
+            } else {
+                 document.body.classList.remove('no-scroll');
+                 startHeaderAnimation();
+            }
+
+            // Listener untuk splash cursor setelah masuk galeri
+            window.addEventListener('mousemove', (e) => {
+                if (document.body.classList.contains('cursor-active')) {
+                    const posX = e.clientX;
+                    const posY = e.clientY;
+
+                    gsap.to(cursorDot, { duration: 0.1, x: posX, y: posY });
+                    gsap.to(cursorOutline, { duration: 0.4, x: posX, y: posY });
+                }
             });
 
-            // Kode Galeri yang sudah ada
-            const photoItems = document.querySelectorAll('.photo-item');
+            // Logika hover untuk splash cursor
+            const interactiveElements = document.querySelectorAll('a, button, .photo-item');
+            interactiveElements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    if (document.body.classList.contains('cursor-active')) {
+                        cursorDot.classList.add('hover');
+                        cursorOutline.classList.add('hover');
+                    }
+                });
+                el.addEventListener('mouseleave', () => {
+                    if (document.body.classList.contains('cursor-active')) {
+                        cursorDot.classList.remove('hover');
+                        cursorOutline.classList.remove('hover');
+                    }
+                });
+            });
+
+
+            const titleEl = document.getElementById('main-title');
+            const subtitleEl = document.getElementById('subtitle');
+            
+            function startHeaderAnimation() {
+                if ((!preloader || preloader.style.display === 'none') && titleEl) {
+                    const titleText = 'Pappermintpixel';
+                    const subtitleText = 'Sudut Pandang Sebuah Piksel';
+
+                    function typeWriter(element, text, speed, onComplete) {
+                        let i = 0;
+                        element.innerHTML = '';
+                        element.classList.add('typing-cursor');
+                        function type() {
+                            if (i < text.length) {
+                                element.innerHTML += text.charAt(i);
+                                i++;
+                                setTimeout(type, speed);
+                            } else {
+                                element.classList.remove('typing-cursor');
+                                if (onComplete) { onComplete(); }
+                            }
+                        }
+                        type();
+                    }
+
+                    typeWriter(titleEl, titleText, 150, () => {
+                        subtitleEl.style.opacity = 1;
+                        typeWriter(subtitleEl, subtitleText, 75);
+                    });
+                }
+            }
+
+            const allItems = Array.from(document.querySelectorAll('.photo-item'));
             const filterButtons = document.querySelectorAll('.filter-btn');
+            const paginationContainer = document.getElementById('pagination-container');
+            const backToTopBtn = document.getElementById('back-to-top-btn');
+            
+            const itemsPerPage = 6;
+            let currentPage = 1;
+            let currentFilter = 'all';
+
+            function displayPage(page, filteredItems) {
+                currentPage = page;
+                allItems.forEach(item => { item.classList.add('hidden'); item.classList.remove('visible'); });
+                const startIndex = (page - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedItems = filteredItems.slice(startIndex, endIndex);
+                paginatedItems.forEach((item, index) => {
+                    item.classList.remove('hidden');
+                    setTimeout(() => { item.classList.add('visible'); }, 50 * index);
+                });
+                setupPagination(filteredItems.length, page);
+                initScrollFloat(); 
+            }
+
+            function setupPagination(totalItems, currentPage) {
+                paginationContainer.innerHTML = '';
+                const pageCount = Math.ceil(totalItems / itemsPerPage);
+                if (pageCount > 1) {
+                    for (let i = 1; i <= pageCount; i++) {
+                        const btn = document.createElement('button');
+                        btn.classList.add('page-btn');
+                        btn.innerText = i;
+                        if (i === currentPage) { btn.classList.add('active'); }
+                        btn.addEventListener('click', () => {
+                            const currentFilteredItems = getFilteredItems();
+                            displayPage(i, currentFilteredItems);
+                            document.querySelector('.gallery-container').scrollIntoView({ behavior: 'smooth' });
+                        });
+                        paginationContainer.appendChild(btn);
+                    }
+                }
+            }
+            
+            function getFilteredItems() { return allItems.filter(item => currentFilter === 'all' || item.dataset.category === currentFilter); }
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentFilter = button.dataset.filter;
+                    displayPage(1, getFilteredItems());
+                });
+            });
+            
+            displayPage(1, getFilteredItems());
+
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) { backToTopBtn.classList.add('show'); } 
+                else { backToTopBtn.classList.remove('show'); }
+            });
+
+            backToTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+            function initScrollFloat() {
+                ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+                
+                gsap.utils.toArray('.photo-item.visible').forEach(item => {
+                    const image = item.querySelector('img');
+                    gsap.to(image, {
+                        y: "20%", 
+                        ease: "none",
+                        scrollTrigger: {
+                            trigger: item,
+                            start: "top bottom", 
+                            end: "bottom top", 
+                            scrub: true 
+                        }
+                    });
+                });
+            }
+            
             const lightbox = document.getElementById('lightbox');
             const lightboxImg = document.getElementById('lightbox-img');
             const lightboxCaption = document.getElementById('lightbox-caption');
@@ -457,45 +824,19 @@
             const closeBtn = document.querySelector('.close-button');
             const prevBtn = document.querySelector('.prev-btn');
             const nextBtn = document.querySelector('.next-btn');
-
             let currentIndex;
             let currentVisibleItems = [];
+            
+            const initializeVisibleItems = () => { currentVisibleItems = Array.from(document.querySelectorAll('.photo-item:not(.hidden)')); };
 
-            // 1. Fungsi Filter
-            filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    const filter = button.dataset.filter;
-                    currentVisibleItems = [];
-                    photoItems.forEach(item => {
-                        if (filter === 'all' || item.dataset.category === filter) {
-                            item.classList.remove('hidden');
-                            currentVisibleItems.push(item);
-                        } else {
-                            item.classList.add('hidden');
-                        }
-                    });
-                });
-            });
-
-            // Inisialisasi item yang terlihat
-            const initializeVisibleItems = () => {
-                currentVisibleItems = Array.from(photoItems).filter(item => !item.classList.contains('hidden'));
-            };
-
-            // 2. Fungsi Lightbox
-            photoItems.forEach(item => {
+            allItems.forEach(item => {
                 item.addEventListener('click', (e) => {
-                    // Hanya buka lightbox jika target klik bukan tombol unduh atau isinya
-                    if (e.target.closest('.download-btn')) {
-                        return;
-                    }
+                    if (e.target.closest('.download-btn')) { return; }
                     initializeVisibleItems();
                     const itemImg = item.querySelector('img');
                     const title = item.querySelector('h3').textContent;
                     const desc = item.querySelector('p').textContent;
-                    lightboxImg.src = itemImg.dataset.fullurl;
+                    lightboxImg.src = itemImg.dataset.fullurl || itemImg.src;
                     captionTitle.textContent = title;
                     captionDesc.textContent = desc;
                     currentIndex = currentVisibleItems.indexOf(item);
@@ -503,32 +844,25 @@
                 });
             });
 
-            const closeLightbox = () => {
-                lightbox.style.display = 'none';
-            };
-
+            const closeLightbox = () => { lightbox.style.display = 'none'; };
             const showPhoto = (index) => {
+                if(currentVisibleItems.length === 0) return;
                 if (index >= currentVisibleItems.length) index = 0;
                 if (index < 0) index = currentVisibleItems.length - 1;
-                
                 const item = currentVisibleItems[index];
                 const itemImg = item.querySelector('img');
                 const title = item.querySelector('h3').textContent;
                 const desc = item.querySelector('p').textContent;
-                
-                lightboxImg.src = itemImg.dataset.fullurl;
+                lightboxImg.src = itemImg.dataset.fullurl || itemImg.src;
                 captionTitle.textContent = title;
                 captionDesc.textContent = desc;
                 currentIndex = index;
             };
 
-            // Event Listeners untuk Lightbox
             closeBtn.addEventListener('click', closeLightbox);
             nextBtn.addEventListener('click', () => showPhoto(currentIndex + 1));
             prevBtn.addEventListener('click', () => showPhoto(currentIndex - 1));
-            lightbox.addEventListener('click', e => {
-                if (e.target === lightbox) closeLightbox();
-            });
+            lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
             document.addEventListener('keydown', e => {
                 if (lightbox.style.display === 'flex') {
                     if (e.key === 'Escape') closeLightbox();
@@ -536,9 +870,6 @@
                     if (e.key === 'ArrowLeft') showPhoto(currentIndex - 1);
                 }
             });
-            
-            // Inisialisasi saat pertama kali load
-            initializeVisibleItems();
         });
     </script>
 </body>
